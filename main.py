@@ -11,7 +11,8 @@ app = Flask(__name__)
 
 @app.route("/")
 def hello():
-    dbs = db_connection()
+    db_connection()
+    return f"<p>{dbs} </p>"
 
 
 """
@@ -28,4 +29,4 @@ def hello():
 
 """
 
-app.run()
+app.run(debug=True)

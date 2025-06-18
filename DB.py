@@ -7,7 +7,8 @@ import flask
 def db_connection():
     client = MongoClient(os.getenv("DB_URL"))
     db = client.ez_database
-    dbNames = db.list_collection_names()
-    return dbNames
+
+    print("DB Connected")
+
 
 
