@@ -11,7 +11,7 @@ Action which could be done by an Ops User
 2. Upload File*
 
 * Only Ops User is allowed to upload pptx,docx and xlsx *
-Upload file must be only of pptx,docx, and xlsx type
+Uploads file must be only of pptx,docx, and xlsx type
 User 2: Client User
 Action which could be done by a Client User
 3. Sign Up ( Return an encrypted URL )
