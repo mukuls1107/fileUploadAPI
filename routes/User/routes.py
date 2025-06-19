@@ -21,3 +21,12 @@ def registerUser():
     )
     # print(data)
     return dbResponse
+
+
+
+@userRoutes.route("/verify/<token>", methods=["GET"])
+def verifyUserEmail(token):
+    print(token)
+    result = userModel.verifyEmail(token)
+    return result
+    # return "Verification Route hit"

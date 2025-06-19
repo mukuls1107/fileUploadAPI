@@ -1,9 +1,11 @@
 from flask import Flask, jsonify
 from pymongo import MongoClient
 import bcrypt, uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from DB import db
 
+
+from utility.email_util import sendMail
 
 if db is not None:
     users = db.users
@@ -12,7 +14,7 @@ else:
 
 
 class User:
-    def createUser(self, email, password, user_type="client"):
+    def createUser(self, email, password, userType="client"):
 
         if self.checkUserPresent(email):
             return jsonify({"msg": "User is already Present", "success": False}), 400
@@ -21,11 +23,11 @@ class User:
         token = str(uuid.uuid4())
         user = {
             "email": email,
-            "password_hash": passwordHash,
-            "user_type": user_type,
-            "is_verified": False if user_type == "client" else True,
-            "verification_token": token,
-            "created_at": datetime.utcnow(),
+            "passwordHash": passwordHash,
+            "userType": userType,
+            "isVerified": False if userType == "client" else True,
+            "verificationToken": token,
+            "createdAt": datetime.utcnow(),
         }
 
         users.insert_one(user)
@@ -35,10 +37,13 @@ class User:
             "success": True,
             "token": token,
             "email": email,
-            "userType": user_type,
+            "userType": userType,
         }
-        return jsonify(userObj), 201
+        # "link": f"http://localhost:5000/api/users/verify/{token}"
+        if userObj["userType"] == "client":
+            sendMail(userObj["email"], userObj["token"])
 
+        return jsonify(userObj), 201
 
     def checkUserPresent(self, email):
         if users is None:
@@ -50,6 +55,36 @@ class User:
         else:
             return False
 
-    
+    def verifyEmail(self, token):
+        if users is None:
+            return jsonify({"msg": "db connection failed", "success": False}), 500
+
+        user = users.find_one({"verificationToken": token})
+
+        if not user:
+            return jsonify({"msg": "Invalid token", "success": False}), 404
+
+        if user["is_verified"] == True:
+            return jsonify({"msg": "User is already verified", "success": True}), 200
+
+        timeSinceTokenGenerated = datetime.utcnow() - user["createdAt"]
+        if timeSinceTokenGenerated > timedelta(minutes=30):
+            return jsonify({
+                "success": False,
+                "msg": "Token already expired"
+            }), 410
+        
+        users.update_one({"_id": user["_id"]}, {"$set": {"is_verified": True}})
+
+        return (
+            jsonify(
+                {
+                    "msg": "User Verification successfull",
+                    "success": True,
+                }
+            ),
+            200,
+        )
+
 
 userModel = User()
