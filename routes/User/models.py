@@ -16,9 +16,7 @@ else:
 class User:
     def createUser(self, email, password, userType="client"):
 
-        if self.checkUserPresent(email):
-            return jsonify({"msg": "User is already Present", "success": False}), 400
-
+       
         passwordHash = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
         token = str(uuid.uuid4())
         user = {
@@ -41,7 +39,7 @@ class User:
         }
         # "link": f"http://localhost:5000/api/users/verify/{token}"
         if userObj["userType"] == "client":
-            sendMail(userObj["email"], userObj["token"])
+            sendMail(userObj["email"], userObj["token"], "Verification Link")
 
         return jsonify(userObj), 201
 
@@ -64,17 +62,15 @@ class User:
         if not user:
             return jsonify({"msg": "Invalid token", "success": False}), 404
 
-        if user["is_verified"] == True:
+        if user["isVerified"] == True:
             return jsonify({"msg": "User is already verified", "success": True}), 200
 
         timeSinceTokenGenerated = datetime.utcnow() - user["createdAt"]
-        if timeSinceTokenGenerated > timedelta(minutes=30):
-            return jsonify({
-                "success": False,
-                "msg": "Token already expired"
-            }), 410
-        
-        users.update_one({"_id": user["_id"]}, {"$set": {"is_verified": True}})
+        if timeSinceTokenGenerated > timedelta(minutes=2):
+            self.resendVerification(user["email"])
+            return jsonify({"success": False, "msg": "A new verification link has been sent on the mail."}), 410
+
+        users.update_one({"_id": user["_id"]}, {"$set": {"isVerified": True}})
 
         return (
             jsonify(
@@ -85,6 +81,40 @@ class User:
             ),
             200,
         )
+
+    def resendVerification(self, email):
+        user = users.find_one({"email": email})
+
+        if not user:
+            return (
+                jsonify(
+                    {
+                        "msg": "User not found",
+                        "success": False,
+                    }
+                ),
+                404,
+            )
+
+        if user["isVerified"] == True:
+            return jsonify({"msg": "User is already verified", "success": True}), 200
+
+        newToken = str(uuid.uuid4())
+
+        users.update_one(
+            {"_id": user["_id"]},
+            {"$set": {
+                "verificationToken" : newToken,
+                "createdAt": datetime.utcnow()
+            }}
+        )
+        
+        sendMail(email, newToken, "New Verification Link Generated")
+        
+        return jsonify({
+            "msg": "New Verification Link Sent",
+            "success": True
+        }), 200
 
 
 userModel = User()

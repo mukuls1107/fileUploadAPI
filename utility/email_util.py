@@ -2,9 +2,9 @@ import smtplib
 from email.message import EmailMessage
 import os
 
-def sendMail(userEmail, token):
+def sendMail(userEmail, token, title):
     msg= EmailMessage()
-    msg["Subject"] = "Verification Email"
+    msg["Subject"] = title
     msg["From"] = os.getenv("MY_EMAIL")
     msg["To"] = userEmail
     link = f"http://localhost:5000/api/users/verify/{token}"
