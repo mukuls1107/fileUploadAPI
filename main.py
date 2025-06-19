@@ -1,7 +1,8 @@
 from flask import Flask
 import os
-from dotenv import load_dotenv, dotenv_values
-
+from dotenv import load_dotenv
+import asyncio
+from routes.User.routes import userRoutes
 
 from DB import db_connection
 
@@ -9,10 +10,33 @@ load_dotenv()
 app = Flask(__name__)
 
 
+try:
+    db = db_connection()
+
+except Exception as e:
+    exceptionString = f"""
+    File Sharing App
+    Error: {str(e.message)}
+    """
+
+
 @app.route("/")
 def hello():
-    db_connection()
-    return f"<p>{dbs} </p>"
+    if db is not None:
+        return f"""
+            <h1>File Sharing App</h1>
+            <p>Database connected successfully!</p>
+            <p>Available collections: </p>
+            """
+    else:
+        return f"""
+                <h1>File Sharing App</h1>
+                <p>Error: Could not connect to database</p>
+                <p> {exceptionString}</p>
+                """
+
+
+app.register_blueprint(userRoutes, url_prefix="/api/users")
 
 
 """
@@ -28,5 +52,6 @@ def hello():
      - /uploads -> GET to server and return all the files available in the database. 
 
 """
+
 
 app.run(debug=True)
