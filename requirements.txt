@@ -2,3 +2,7 @@ flask
 pymongo
 python-dotenv
 bcrypt
+jwt
+functools
+uuid
+bson
