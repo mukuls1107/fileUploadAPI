@@ -1,4 +1,7 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session
+import bcrypt, jwt, os
+from datetime import datetime, timedelta
+from functools import wraps
 
 # from models import userModel
 from .models import userModel
@@ -6,28 +9,43 @@ from .models import userModel
 userRoutes = Blueprint("users", __name__)
 
 
+# token_required copied From Bekbrace's tutorial
+def token_required(func):
+    @wraps(func)
+    def decorated(*args, **kwargs):
+        token = request.args.get("token")
+        if not token:
+            return jsonify({"msg": "Token is missing"}), 401
+        try:
+            payload = jwt.decode(token, os.getenv("JWT_KEY"),algorithms=["HS256"])
+        except:
+            return jsonify({"msg": "Token is invalid"}), 404
+
+    return decorated
+
+
+@userRoutes.route("/public", methods=["GET"])
+@token_required
+def public():
+    return "JWT Verified! Hello User"
+
+
 @userRoutes.route("/signup", methods=["POST"])
 def registerUser():
     data = request.get_json()
 
-    
     if not data["email"] or not data["password"] or not data["userType"]:
         return jsonify({"success": False, "msg": "Incomplete details"}), 400
 
     if userModel.checkUserPresent(data["email"]):
-            return jsonify({"msg": "User is already Present", "success": False}), 400
+        return jsonify({"msg": "User is already Present", "success": False}), 400
 
-    
     dbResponse = userModel.createUser(
-        email=data["email"], 
-        password=data["password"],
-        userType=data["userType"]
+        email=data["email"], password=data["password"], userType=data["userType"]
     )
     # print(data)
-    
-    
-    return dbResponse
 
+    return dbResponse
 
 
 @userRoutes.route("/verify/<token>", methods=["GET"])
@@ -36,10 +54,80 @@ def verifyUserEmail(token):
     result = userModel.verifyEmail(token)
     return result
     # return "Verification Route hit"
-    
+
 
 @userRoutes.route("/login", methods=["POST"])
-def login(self):
-    return
-    
-     
+def login():
+    data = request.get_json()
+    if not data or not data["email"] or not data["password"]:
+        return (
+            jsonify({"success": False, "msg": "missing email or password"}),
+            400,
+        )
+
+    email = data["email"].lower().strip()
+    password = data["password"]
+
+    if userModel.checkUserPresent(email):
+        userData = userModel.getUserInfo(email)
+
+        checkPassword = bcrypt.checkpw(password.encode(), userData["passwordHash"])
+
+        if checkPassword:
+            if userData["isVerified"]:
+                askedData = {
+                    "id": str(userData["_id"]),
+                    "email": userData["email"],
+                    "userType": userData["userType"],
+                    "isVerified": userData["isVerified"],
+                }
+
+                jwtToken = jwt.encode(
+                    {
+                        "user": askedData["email"],
+                        "expiration": datetime.utcnow() + timedelta(minutes=5),
+                    },
+                    os.getenv("JWT_KEY"),
+                )
+                return (
+                    jsonify(
+                        {
+                            "msg": "logged in successfully",
+                            "success": True,
+                            "user": askedData,
+                            "token": jwtToken,
+                        }
+                    ),
+                    200,
+                )
+            else:
+                userModel.resendVerification(email)
+                return (
+                    jsonify(
+                        {
+                            "msg": "user is not verified, verification link sent again!",
+                            "success": False,
+                        }
+                    ),
+                    403,
+                )
+        else:
+            return (
+                jsonify(
+                    {
+                        "msg": "Invalid email or password",
+                        "success": False,
+                    }
+                ),
+                401,
+            )
+    else:
+        return (
+            jsonify(
+                {
+                    "msg": "User not found",
+                    "success": False,
+                }
+            ),
+            404,
+        )

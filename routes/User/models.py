@@ -14,9 +14,21 @@ else:
 
 
 class User:
+
+    def getUserInfo(self, email):
+        if users is None:
+            return {"error": "Database connection failed"}, 500
+
+        user = users.find_one({"email": email})
+        
+        if user:
+            return user
+        else:
+            return None
+        
+
     def createUser(self, email, password, userType="client"):
 
-       
         passwordHash = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
         token = str(uuid.uuid4())
         user = {
@@ -68,7 +80,15 @@ class User:
         timeSinceTokenGenerated = datetime.utcnow() - user["createdAt"]
         if timeSinceTokenGenerated > timedelta(minutes=2):
             self.resendVerification(user["email"])
-            return jsonify({"success": False, "msg": "A new verification link has been sent on the mail."}), 410
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "msg": "A new verification link has been sent on the mail.",
+                    }
+                ),
+                410,
+            )
 
         users.update_one({"_id": user["_id"]}, {"$set": {"isVerified": True}})
 
@@ -103,18 +123,12 @@ class User:
 
         users.update_one(
             {"_id": user["_id"]},
-            {"$set": {
-                "verificationToken" : newToken,
-                "createdAt": datetime.utcnow()
-            }}
+            {"$set": {"verificationToken": newToken, "createdAt": datetime.utcnow()}},
         )
-        
+
         sendMail(email, newToken, "New Verification Link Generated")
-        
-        return jsonify({
-            "msg": "New Verification Link Sent",
-            "success": True
-        }), 200
+
+        return jsonify({"msg": "New Verification Link Sent", "success": True}), 200
 
 
 userModel = User()
