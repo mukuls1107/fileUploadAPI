@@ -85,7 +85,7 @@ def login():
                 jwtToken = jwt.encode(
                     {
                         "user": askedData["email"],
-                        "expiration": datetime.utcnow() + timedelta(minutes=5),
+                        "expiration": str(datetime.utcnow() + timedelta(minutes=5)),
                     },
                     os.getenv("JWT_KEY"),
                 )

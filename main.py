@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 import asyncio
 from routes.User.routes import userRoutes
-
+from routes.Files.routes import fileRoutes
 from DB import db_connection
 
 load_dotenv()
@@ -37,7 +37,7 @@ def hello():
 
 
 app.register_blueprint(userRoutes, url_prefix="/api/users")
-
+app.register_blueprint(fileRoutes, url_prefix="/api/file")
 
 """
     # Routes
