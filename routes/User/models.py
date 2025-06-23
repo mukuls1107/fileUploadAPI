@@ -20,12 +20,39 @@ class User:
             return {"error": "Database connection failed"}, 500
 
         user = users.find_one({"email": email})
-        
+
         if user:
             return user
         else:
             return None
-        
+
+    def getUserAccessToken(self, token):
+        if users is None:
+            return {"error": "Database connection failed"}, 500
+
+        user = users.find_one({"access_token.value": token})
+
+        if user:
+            tokenData = user.get("access_token")
+            if tokenData and datetime.utcnow() < tokenData["expires_at"]:
+
+                return tokenData
+        else:
+            users.update_one({"_id": user["_id"]}, {"$unset": {"access_token": ""}})
+            return False
+
+    def addTokeninUser(self, email, token):
+        users.find_one_and_update(
+            {"email": email},
+            {
+                "$set": {
+                    "access_token": {
+                        "value": token,
+                        "expires_at": datetime.utcnow() + timedelta(minutes=5),
+                    }
+                }
+            },
+        )
 
     def createUser(self, email, password, userType="client"):
 
@@ -35,7 +62,7 @@ class User:
             "email": email,
             "passwordHash": passwordHash,
             "userType": userType,
-            "isVerified": False if userType == "client" else True,
+            "isVerified": False if userType.lower() == "client" else True,
             "verificationToken": token,
             "createdAt": datetime.utcnow(),
         }

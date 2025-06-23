@@ -9,23 +9,11 @@ from .models import userModel
 userRoutes = Blueprint("users", __name__)
 
 
-# token_required copied From Bekbrace's tutorial
-def token_required(func):
-    @wraps(func)
-    def decorated(*args, **kwargs):
-        token = request.args.get("token")
-        if not token:
-            return jsonify({"msg": "Token is missing"}), 401
-        try:
-            payload = jwt.decode(token, os.getenv("JWT_KEY"),algorithms=["HS256"])
-        except:
-            return jsonify({"msg": "Token is invalid"}), 404
-
-    return decorated
-
+def token_required(token):
+    # if 'token' in 
+    pass
 
 @userRoutes.route("/public", methods=["GET"])
-@token_required
 def public():
     return "JWT Verified! Hello User"
 
@@ -33,7 +21,7 @@ def public():
 @userRoutes.route("/signup", methods=["POST"])
 def registerUser():
     data = request.get_json()
-
+    
     if not data["email"] or not data["password"] or not data["userType"]:
         return jsonify({"success": False, "msg": "Incomplete details"}), 400
 
@@ -89,6 +77,11 @@ def login():
                     },
                     os.getenv("JWT_KEY"),
                 )
+                
+                session["access_token"] = jwtToken
+                userModel.addTokeninUser(askedData["email"], jwtToken)
+                
+                
                 return (
                     jsonify(
                         {

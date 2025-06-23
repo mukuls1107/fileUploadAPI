@@ -5,11 +5,14 @@ import asyncio
 from routes.User.routes import userRoutes
 from routes.Files.routes import fileRoutes
 from DB import db_connection
+from flask_cors import CORS
+
 
 load_dotenv()
 app = Flask(__name__)
+CORS(app=app)
 
-
+app.secret_key = "SECRET_KEY"
 try:
     db = db_connection()
 

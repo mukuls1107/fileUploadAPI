@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session
 import os
 from datetime import datetime
 from DB import db
@@ -6,11 +6,17 @@ from .models import fileModel
 from utility.fileUpload_util import fileUpload
 from utility.fileUpload_util import checkFileType
 
+
+# Auth middleware
+from middlewares.login_middleware import auth
+
+
 fileRoutes = Blueprint("files", __name__)
 from ..User.models import userModel
 
 
 @fileRoutes.route("/upload", methods=["POST"])
+@auth
 def uploadFile():
     file = request.files.get("file")
     email = request.form.get("email")
@@ -52,6 +58,7 @@ def uploadFile():
 
 
 @fileRoutes.route("/uploads", methods=["GET"])
+@auth
 def getFiles():
     email = request.form.get("email")
 
@@ -88,7 +95,6 @@ def getFiles():
         jsonify({"msg": "All files are here", "success": True, "files": dataObject}),
         200,
     )
-
 
 
 @fileRoutes.route("/download", methods=["GET"])
@@ -134,3 +140,18 @@ def getFile():
         ),
         200,
     )
+
+
+@fileRoutes.route("/user-info", methods=["GET"])
+def showUserInfo():
+    data = request.get_json()
+    name = data["username"]
+
+    userExist = userModel.getUserInfo(name)
+
+    if not userExist:
+        return jsonify({"msg": "User doesn't exist", "success": False}), 404
+
+    session["username"] = name
+
+    return jsonify({"msg": "Session Data stored", "success": True}), 200
