@@ -40,6 +40,15 @@ class User:
         else:
             users.update_one({"_id": user["_id"]}, {"$unset": {"access_token": ""}})
             return False
+        
+    def getUserRoleFromToken(self,token):
+        if users is None:
+            return {"error": "Database connection failed"}, 500
+        user = users.find_one({"access_token.value": token})
+        if user:
+            return user["userType"]
+        else:
+            False
 
     def addTokeninUser(self, email, token):
         users.find_one_and_update(

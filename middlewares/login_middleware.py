@@ -34,4 +34,30 @@ def auth(view_func):
                     ),
                     400,
                 )
+
     return decorated
+
+def authForAdmin(role):
+    def decorator(view_func):
+        @functools.wraps(view_func)
+        def decorated(*args, **kwargs):
+            if "access_token" not in session:
+                return jsonify({"msg": "Access token not found", "success": False}), 404
+
+            token = session.get("access_token")
+            user = userModel.getUserAccessToken(token=token)
+
+            if not user:
+                return jsonify({"msg": "Access Denied", "success": False}), 401
+                # return jsonify({"msg": "User found", "success": True}), 200
+
+            userRole = userModel.getUserRoleFromToken(token)
+
+            if userRole.lower() != "ops":
+                return jsonify({"msg": "Access restricted to " + userRole, "success": False}), 403
+
+            request.user = user
+            return view_func(*args, **kwargs)
+
+        return decorated  
+    return decorator

@@ -8,7 +8,7 @@ from utility.fileUpload_util import checkFileType
 
 
 # Auth middleware
-from middlewares.login_middleware import auth
+from middlewares.login_middleware import auth, authForAdmin
 
 
 fileRoutes = Blueprint("files", __name__)
@@ -17,19 +17,21 @@ from ..User.models import userModel
 
 @fileRoutes.route("/upload", methods=["POST"])
 @auth
+@authForAdmin(role="ops")
+
 def uploadFile():
     file = request.files.get("file")
     email = request.form.get("email")
 
-    user = userModel.getUserInfo(email=email)
+    # user = userModel.getUserInfo(email=email)
 
-    if user["userType"] != "ops":
-        return (
-            jsonify(
-                {"msg": "client is not allowed to upload the files", "success": False}
-            ),
-            400,
-        )
+    # if user["userType"] != "ops":
+    #     return (
+    #         jsonify(
+    #             {"msg": "client is not allowed to upload the files", "success": False}
+    #         ),
+    #         400,
+    #     )
 
     if not file and checkFileType(file) == False:
         return (
