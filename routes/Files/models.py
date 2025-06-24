@@ -13,6 +13,7 @@ else:
 
 
 files = db.files
+downloads = db.downloads
 
 class FileSys():
     
@@ -35,7 +36,8 @@ class FileSys():
     
     def getFile(self, id):
         print("Asking for file id", id)
-        return files.find_one({"downloadFile": id})
-    
+        
+        fileData = files.find_one({"downloadFile": id})
+        return fileData
     
 fileModel = FileSys() 

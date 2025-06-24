@@ -18,7 +18,9 @@ def fileUpload(file, filename):
         upload = cloudinary.uploader.upload(
             file,
             resource_type="raw",
-            public_id=filename
+            public_id=filename,
+            sign_url=True,
+            type="authenticated"
         )
         
         return upload["secure_url"]
