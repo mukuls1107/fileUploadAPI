@@ -1,11 +1,12 @@
 from flask import Blueprint, jsonify, request, session
 import os
+import time
 from datetime import datetime
 from DB import db
 from .models import fileModel
 from utility.fileUpload_util import fileUpload
 from utility.fileUpload_util import checkFileType
-
+from cloudinary.utils import cloudinary_url
 
 # Auth middleware
 from middlewares.login_middleware import auth, authForAdmin
@@ -18,7 +19,6 @@ from ..User.models import userModel
 @fileRoutes.route("/upload", methods=["POST"])
 @auth
 @authForAdmin(role="ops")
-
 def uploadFile():
     file = request.files.get("file")
     email = request.form.get("email")
@@ -100,6 +100,7 @@ def getFiles():
 
 
 @fileRoutes.route("/download", methods=["GET"])
+@auth
 def getFile():
     email = request.form.get("email")
     fileId = request.args.get("file")
@@ -121,7 +122,15 @@ def getFile():
         )
 
     fileFound = fileModel.getFile(fileId)
+    signedURL, options = cloudinary_url(
+        fileFound["publicID"],
+        resource_type= "raw",
+        type="authenticated",
+        sign_url=True,
+        expires_at= int(time.time()) + 300,
+        attachment=fileFound["filename"],
 
+    )
     if fileFound is None:
         return (
             jsonify({"msg": "Invalid file id or file not found", "success": False}),
@@ -137,7 +146,7 @@ def getFile():
                 "success": True,
                 "data": {
                     "filename": fileFound["filename"],
-                    "downloadURL": fileFound["url"],
+                    "downloadURL": signedURL,
                     "Uploaded By": fileFound["uploadedBy"],
                 },
             }

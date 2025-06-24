@@ -24,7 +24,8 @@ class FileSys():
             "id": fileId,
             "filename": filename.filename,
             "uploadedBy": uploadedBy,
-            "url": url,
+            "url": url["secure_url"],
+            "publicID": url["public_id"],
             "downloadFile": str(uuid.uuid4())
         }
         

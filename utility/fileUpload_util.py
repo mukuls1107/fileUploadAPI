@@ -10,6 +10,7 @@ cloudinary.config(
     cname=os.getenv("CLOUDINARY_CNAME"),
     apiKey=os.getenv("API_KEY"),
     apiSecret=os.getenv("API_SECRET"),
+    secure=True     
 )
 
 
@@ -19,11 +20,12 @@ def fileUpload(file, filename):
             file,
             resource_type="raw",
             public_id=filename,
-            sign_url=True,
             type="authenticated"
         )
+        print(upload)
         
-        return upload["secure_url"]
+        
+        return upload
 
     except Exception as err:
         print("error in file upload:", err)
