@@ -7,6 +7,7 @@ from .models import fileModel
 from utility.fileUpload_util import fileUpload
 from utility.fileUpload_util import checkFileType
 from cloudinary.utils import cloudinary_url
+from datetime import timedelta
 
 # Auth middleware
 from middlewares.login_middleware import auth, authForAdmin
@@ -33,9 +34,9 @@ def uploadFile():
     #         400,
     #     )
 
-    if not file and checkFileType(file) == False:
+    if not file or not checkFileType(file.filename):
         return (
-            jsonify({"msg": f"{file} file not allowed", "success": False}),
+            jsonify({"msg": f"File not allowed or invalid file type", "success": False}),
             400,
         )
 
@@ -122,14 +123,16 @@ def getFile():
         )
 
     fileFound = fileModel.getFile(fileId)
+    expiryTIme = int(time.time() + 30)
+    print(f"================================================\n Timestamp: {expiryTIme} \n=============================")
     signedURL, options = cloudinary_url(
         fileFound["publicID"],
-        resource_type= "raw",
-        type="authenticated",
+        resource_type="raw",
+        type="private",
         sign_url=True,
-        expires_at= int(time.time()) + 300,
+        secure=True,
+        timestamp= expiryTIme,
         attachment=fileFound["filename"],
-
     )
     if fileFound is None:
         return (
@@ -137,8 +140,6 @@ def getFile():
             404,
         )
 
-        
-    
     return (
         jsonify(
             {
@@ -146,7 +147,7 @@ def getFile():
                 "success": True,
                 "data": {
                     "filename": fileFound["filename"],
-                    "downloadURL": signedURL,
+                    "downloadURL": f"{signedURL}?v={expiryTIme}",
                     "Uploaded By": fileFound["uploadedBy"],
                 },
             }

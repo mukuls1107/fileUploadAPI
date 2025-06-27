@@ -2,7 +2,7 @@ flask
 pymongo
 python-dotenv
 bcrypt
-jwt
-functools
-uuid
-bson
+PyJWT
+cloudinary
+flask-cors
+pytest

@@ -3,7 +3,7 @@ import cloudinary
 import cloudinary.uploader
 
 
-possibleExtensions = {"docx", "ppt", "xlsx"}
+possibleExtensions = {"docx", "pptx", "xlsx"}
 
 
 cloudinary.config(
@@ -20,7 +20,7 @@ def fileUpload(file, filename):
             file,
             resource_type="raw",
             public_id=filename,
-            type="authenticated"
+            type="private"
         )
         print(upload)
         

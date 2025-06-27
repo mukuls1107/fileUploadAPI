@@ -12,7 +12,7 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app=app)
 
-app.secret_key = "SECRET_KEY"
+app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
 try:
     db = db_connection()
 
