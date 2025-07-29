@@ -57,7 +57,7 @@ class User:
                 "$set": {
                     "access_token": {
                         "value": token,
-                        "expires_at": datetime.utcnow() + timedelta(minutes=5),
+                        "expires_at": datetime.utcnow() + timedelta(hour=24),
                     }
                 }
             },

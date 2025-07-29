@@ -22,7 +22,7 @@ from ..User.models import userModel
 @authForAdmin(role="ops")
 def uploadFile():
     file = request.files.get("file")
-    email = request.form.get("email")
+    email = request.user
 
     # user = userModel.getUserInfo(email=email)
 
@@ -33,6 +33,9 @@ def uploadFile():
     #         ),
     #         400,
     #     )
+    if not email:
+        # This case should ideally not be hit if @auth is working, but good for robustness
+        return jsonify({"msg": "Authenticated user email not found.", "success": False}), 401
 
     if not file or not checkFileType(file.filename):
         return (
@@ -46,6 +49,8 @@ def uploadFile():
         return jsonify({"msg": "upload failed", "success": False}), 500
 
     data = fileModel.fileSave(file, email, url)
+    if not data:
+        return jsonify({"msg": "Failed to save file metadata to database.", "success": False}), 500
 
     return (
         jsonify(
@@ -63,8 +68,7 @@ def uploadFile():
 @fileRoutes.route("/uploads", methods=["GET"])
 @auth
 def getFiles():
-    email = request.form.get("email")
-
+    email = request.user
     user = userModel.getUserInfo(email=email)
 
     if not email:
@@ -103,13 +107,13 @@ def getFiles():
 @fileRoutes.route("/download", methods=["GET"])
 @auth
 def getFile():
-    email = request.form.get("email")
+    email = request.user
     fileId = request.args.get("file")
 
     user = userModel.getUserInfo(email=email)
 
-    if not email:
-        return jsonify({"msg": "no email provided", "success": False}), 404
+    if not email or not fileId:
+        return jsonify({"msg": "no email/fileID provided", "success": False}), 404
 
     if user is None:
         return (
@@ -123,7 +127,7 @@ def getFile():
         )
 
     fileFound = fileModel.getFile(fileId)
-    expiryTIme = int(time.time() + 30)
+    expiryTIme = int(time.time() + 3600)
     print(f"================================================\n Timestamp: {expiryTIme} \n=============================")
     signedURL, options = cloudinary_url(
         fileFound["publicID"],

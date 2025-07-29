@@ -13,13 +13,16 @@ app = Flask(__name__)
 CORS(app=app)
 
 app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
+db = None # Initialize db as None
+exceptionString = "" # Initialize exceptionString
+
 try:
     db = db_connection()
 
 except Exception as e:
     exceptionString = f"""
     File Sharing App
-    Error: {str(e.message)}
+    Error: {str(e)} # <--- CHANGED: use str(e) to get the error message
     """
 
 
@@ -29,7 +32,7 @@ def hello():
         return f"""
             <h1>File Sharing App</h1>
             <p>Database connected successfully!</p>
-            <p>Available collections: </p>
+            <p>Available collections: {', '.join(db.list_collection_names())}</p> # Example: list collections
             """
     else:
         return f"""
@@ -42,6 +45,9 @@ def hello():
 app.register_blueprint(userRoutes, url_prefix="/api/users")
 app.register_blueprint(fileRoutes, url_prefix="/api/file")
 
+# ... (comments)
+
+app.run(debug=True)
 """
     # Routes
      - /Sign-up -> POST to server which checks database [userid, email, password]
@@ -55,6 +61,3 @@ app.register_blueprint(fileRoutes, url_prefix="/api/file")
      - /uploads -> GET to server and return all the files available in the database. 
 
 """
-
-
-app.run(debug=True)

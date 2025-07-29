@@ -71,13 +71,13 @@ def login():
                 }
 
                 jwtToken = jwt.encode(
-                    {
-                        "user": askedData["email"],
-                        "expiration": str(datetime.utcnow() + timedelta(minutes=5)),
-                    },
-                    os.getenv("JWT_KEY"),
-                )
-                
+                                    {
+                                        "user": askedData["email"],
+                                        "expiration": str(datetime.utcnow() + timedelta(hours=24)), # <--- CHANGED
+                                    },
+                                    os.getenv("JWT_KEY"),
+                                )
+
                 session["access_token"] = jwtToken
                 userModel.addTokeninUser(askedData["email"], jwtToken)
                 
