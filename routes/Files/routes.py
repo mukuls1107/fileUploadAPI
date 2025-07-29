@@ -37,11 +37,16 @@ def uploadFile():
         # This case should ideally not be hit if @auth is working, but good for robustness
         return jsonify({"msg": "Authenticated user email not found.", "success": False}), 401
 
-    if not file or not checkFileType(file.filename):
+    if not file:
         return (
-            jsonify({"msg": f"File not allowed or invalid file type", "success": False}),
+            jsonify({"msg": f"File not found", "success": False}),
             400,
         )
+    if not checkFileType(file.filename):
+        return (
+                    jsonify({"msg": f"Invalid File", "success": False}),
+                    400,
+                )
 
     url = fileUpload(file, file.filename)
 
