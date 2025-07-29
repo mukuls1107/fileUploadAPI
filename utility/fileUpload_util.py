@@ -20,7 +20,7 @@ def fileUpload(file, original_filename): # Accept original filename as argument
 
         upload = cloudinary.uploader.upload(
             file,
-            resource_type="raw", # 'raw' for documents, consider 'image' for images
+            resource_type="image", # 'raw' for documents, consider 'image' for images
             public_id=unique_public_id, # <-- CHANGED: Use unique ID
             type="private"
         )
