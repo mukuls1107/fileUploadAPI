@@ -46,8 +46,10 @@ app.register_blueprint(userRoutes, url_prefix="/api/users")
 app.register_blueprint(fileRoutes, url_prefix="/api/file")
 
 # ... (comments)
-
-app.run(debug=True)
+if __name__ == "__main__":
+    # This is crucial for Render deployment
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port, debug=False)
 """
     # Routes
      - /Sign-up -> POST to server which checks database [userid, email, password]
