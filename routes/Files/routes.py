@@ -48,7 +48,7 @@ def uploadFile():
     if not url:
         return jsonify({"msg": "upload failed", "success": False}), 500
 
-    data = fileModel.fileSave(file, email, url)
+    data = fileModel.fileSave(file.filename, email, url) # <--- CHANGED: file.filename instead of file
     if not data:
         return jsonify({"msg": "Failed to save file metadata to database.", "success": False}), 500
 
