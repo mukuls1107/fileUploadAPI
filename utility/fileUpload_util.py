@@ -3,7 +3,7 @@ import cloudinary
 import cloudinary.uploader
 import uuid # Import uuid for unique IDs
 
-possibleExtensions = {"docx", "pptx", "xlsx",  "png", "jpeg", "jpg", "pdf"} # Added jpg and pdf as common extensions
+possibleExtensions = {"png", "jpeg", "jpg",  "heif", "heic"} # Added jpg and pdf as common extensions
 
 cloudinary.config(
     cloud_name=os.getenv("CLOUDINARY_CNAME"), # <-- CHANGED: 'cname' to 'cloud_name'
